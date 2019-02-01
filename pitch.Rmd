@@ -1,0 +1,105 @@
+---
+title: "Developing Data Products Week 4 Project"
+author: "Alvin Alon"
+date: "February 1, 2019"
+output: slidy_presentation
+---
+## Analysis of the relationships between several variables vs MPG (miles per gallon)
+
+### Discussion 
+
+- "The goal of this work is to determine the influence of several variables in the fuel consumption of the cars. In particular the manual or automatic transmission must be studied in detail.""
+- "The data set used for this study has been extracted from de 1974 Motor Tren US magazine. This data set shows 11 aspects of fuel consumption in 32 automobiles of 1973-1974."
+- "The results of the analysis shows that there is a big influence of weight, horsepower, displacement and number of cylinders in fuel consumption. However, it is really dificult to find a relation between transmission and fuel consumption because of the small size of the data set and the big influence of the mentioned variables."
+
+---
+
+## Exploratory Data Analysis
+
+### Motor Trend Car Road Tests
+
+> The data was extracted from the 1974 Motor Trend US magazine, and comprises fuel consumption and 10 aspects of automobile design and performance for 32 automobiles (1973–74 models).
+
+```{r}
+library(datasets)
+summary(mtcars)
+```
+### Source
+> Henderson and Velleman (1981), Building multiple regression models interactively. Biometrics, 37, 391–411.
+
+---
+
+## mtcars dataset - Format
+
+**A data frame with 32 observations on 11 variables.**
+
+| Index | Field | Detail |
+------- | ----- | ------ |
+| [, 1] | mpg | Miles/(US) gallon |
+| [, 2]  | cyl | Number of cylinders |
+| [, 3]	| disp | Displacement (cu.in.) |
+| [, 4]	| hp | Gross horsepower |
+| [, 5]	| drat | Rear axle ratio |
+| [, 6]	| wt | Weight (lb/1000) |
+| [, 7]	| qsec | 1/4 mile time |
+| [, 8]	| vs | V/S |
+| [, 9]	| am | Transmission (0 = automatic, 1 = manual) |
+| [,10]	| gear | Number of forward gears |
+| [,11]	| carb | Number of carburetors |
+
+---
+
+## Analysis - Source Code and App
+
+Shiny App Link - https://engrasa.shinyapps.io/DDPweek4Project/
+
+```r
+  ## LOADING LIBRARIES
+library(shiny)
+library(datasets)
+
+## FACTORS
+mpgData <- mtcars
+mpgData$am <- factor(mpgData$am, labels = c("Automatic", "Manual"))
+
+## SHINY SERVER
+shinyServer(function(input, output) {
+  
+  formulaLabel <- reactive({
+    paste("mpg ~", input$variable)
+  })
+  
+  formulaTextAnalysis <- reactive({
+    paste("mpg ~", "as.integer(", input$variable, ")")
+  })
+  
+  fit <- reactive({
+    lm(as.formula(formulaTextAnalysis()), data=mpgData)
+  })
+  
+  output$caption <- renderText({
+    formulaLabel()
+  })
+  
+  output$mpgBoxPlot <- renderPlot({
+    boxplot(as.formula(formulaLabel()), 
+            data = mpgData,
+            outline = input$outliers)
+  })
+  
+  output$fit <- renderPrint({
+    summary(fit())
+  })
+  
+  output$mpgPlot <- renderPlot({
+    with(mpgData, {
+      plot(as.formula(formulaTextAnalysis()))
+      abline(fit(), col=2)
+    })
+  })
+  
+})
+
+
+```
+
